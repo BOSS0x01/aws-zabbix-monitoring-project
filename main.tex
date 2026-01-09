@@ -15,7 +15,8 @@
 \usepackage{hyperref}
 \usepackage{abstract}
 \usepackage{parskip} % Better paragraph spacing
-
+\usepackage{tikz}
+\usetikzlibrary{shapes, arrows, positioning}
 % Tighter page layout
 \geometry{
     top=0.85in,
@@ -157,6 +158,41 @@ Le sous-réseau public est associé à la table de routage nouvellement configur
 
 \subsection{Groupes de sécurité}
 Création et configuration des groupes de sécurité pour chaque instance (Zabbix, Linux, Windows).
+
+% ===============================
+\subsection*{Schéma d'architecture du projet}
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        server/.style={rectangle, draw, fill=blue!10, minimum width=2.5cm, minimum height=1cm, font=\small},
+        client/.style={rectangle, draw, fill=green!10, minimum width=2.5cm, minimum height=1cm, font=\small},
+        igw/.style={ellipse, draw, fill=orange!20, minimum width=2cm, minimum height=1cm, font=\small},
+        vpc/.style={rounded corners, thick, draw=black!50, fill=gray!10, inner sep=0.5cm}
+    ]
+    % VPC
+    \node[vpc, minimum width=11cm, minimum height=6cm, label=above:{\textbf{VPC}}] (vpc) {};
+    % Subnet
+    \node[draw, dashed, minimum width=9cm, minimum height=4.5cm, label=above:{\textbf{Subnet (Public)}}] at (0,-0.2) (subnet) {};
+    % Zabbix Server
+    \node[server] (zabbix) at (-2,1) {Zabbix Server\\Ubuntu (t3.large)};
+    % Linux Client
+    \node[client, below=1.2cm of zabbix] (linux) {Client Linux\\Ubuntu (t3.medium)};
+    % Windows Client
+    \node[client, right=3cm of linux] (windows) {Client Windows\\Win Server (t3.large)};
+    % IGW
+    \node[igw, above=1.2cm of zabbix] (igw) {Internet Gateway};
+    % Internet
+    \node[draw=none, fill=none, above=0.7cm of igw] (internet) {Internet};
+    % Connections
+    \draw[->, thick] (igw) -- (zabbix) node[midway, right, font=\scriptsize] {HTTP/HTTPS, SSH};
+    \draw[->, thick] (igw) -- (linux) node[midway, left, font=\scriptsize] {SSH};
+    \draw[->, thick] (igw) -- (windows) node[midway, right, font=\scriptsize] {RDP};
+    \draw[<->, thick, blue!60!black] (zabbix) -- (linux) node[midway, left, font=\scriptsize, xshift=-2pt] {Zabbix Agent 10050};
+    \draw[<->, thick, blue!60!black] (zabbix) -- (windows) node[midway, right, font=\scriptsize, xshift=2pt] {Zabbix Agent 10050};
+    \draw[->, thick] (internet) -- (igw);
+    \end{tikzpicture}
+    \caption{Architecture du déploiement Zabbix sur AWS (VPC, Subnet, IGW, Zabbix Server, Clients Linux/Windows)}
+\end{figure}
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{screenshots/zabbix server security groupe .png}
@@ -410,24 +446,41 @@ Le statut opérationnel des agents est confirmé dans l'interface, attestant du 
 
 % ===============================
 \section{Supervision et alertes}
-Visualisation des données en temps réel (CPU, RAM, etc.), test d’alerte (ex : arrêt de l’agent).
-% À ajouter : captures de tableaux de bord, graphiques, alertes
+Visualisation des données en temps réel (CPU, RAM, etc.), test d’alerte et analyse graphique des performances des clients.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{screenshots/dashboard.png}
+    \caption{Tableau de bord Zabbix}
+\end{figure}
+\noindent
+Le tableau de bord Zabbix présente une vue d'ensemble de l'état du parc supervisé. On y retrouve les alertes, les performances et le statut des hôtes surveillés.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{screenshots/client_ubunto_monitoring.png}
+    \caption{Surveillance du client Ubuntu}
+\end{figure}
+\noindent
+Ce graphique montre la supervision en temps réel du client Ubuntu, avec des métriques telles que l'utilisation CPU, la mémoire et le statut de l'agent. Cela permet de détecter rapidement toute anomalie sur le serveur Linux.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{screenshots/client_windows_monitoring.png}
+    \caption{Surveillance du client Windows}
+\end{figure}
+\noindent
+La surveillance du client Windows affiche les indicateurs de performance et le statut de l'agent Zabbix. On peut ainsi suivre l'activité du serveur Windows et réagir en cas d'alerte ou de problème.
+
+\noindent
+Grâce à ces graphiques, l'administrateur dispose d'une vision claire et synthétique de l'état du parc hybride, facilitant la gestion proactive des incidents et l'optimisation des ressources.
 
 % ===============================
 \section{Conclusion}
-Difficultés rencontrées et solutions apportées. Lien du dépôt GitHub (à insérer ici).
+Ce projet a permis de mettre en œuvre une infrastructure de supervision centralisée sur AWS, adaptée à un parc hybride Linux et Windows. Toutes les étapes, de la création du réseau à la configuration des agents et à la visualisation des métriques, ont été réalisées avec succès.
 
-\section{Discussion}
+Parmi les difficultés rencontrées, la configuration fine des groupes de sécurité et l'intégration des agents sur Windows ont nécessité une attention particulière. L'utilisation de Docker et Docker Compose a grandement simplifié le déploiement du serveur Zabbix.
 
-Analyze and interpret your results. Discuss their implications and how they relate to existing knowledge or previous work.
-
-\section{Conclusion}
-
-Summarize the key points of your report and their significance. You may also suggest directions for future work.
-
-% References (uncomment if using bibliography)
-% \newpage
-% \bibliographystyle{plain}
-% \bibliography{references}
+La supervision graphique et la remontée des alertes permettent désormais une gestion proactive des incidents et une optimisation continue des ressources. Ce projet est valorisé par la documentation complète, les captures d'écran et le dépôt GitHub associé.
 
 \end{document}
